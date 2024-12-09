@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_table_creator
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    networks:
+      - my_network
+    volumes:
+      - ./init_database.sql:/docker-entrypoint-initdb.d/init_database.sql:ro
+      - ./data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432" # Expose PostgreSQL on port 5432
+
+  get_smiles:
+    build: .
+    container_name: cid_to_smiles
+    image: cid_to_smiles:latest
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    depends_on:
+      - postgres
+    command: python CID_to_SMILES.py --input ./PubChem_CID_list_example.csv -t isomeric
+    networks:
+      - my_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -h localhost"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 15s
+
+networks:
+  my_network:
+    driver: bridge
