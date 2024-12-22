@@ -1,0 +1,13 @@
+Можно ли ограничивать ресурсы (например, память или CPU) для сервисов в docker-compose.yml? Если нет, то почему, если да, то как?
+Ответ: Да, можно. Нужно задать в docker-compose.yml под сервисом директиву mem-limit и cpus:
+-------
+version: xx
+services:
+  app_1:
+    image: yy
+    mem-limit: 512M
+    cpus: '4.0'
+-------
+
+Как можно запустить только определенный сервис из docker-compose.yml, не запуская остальные?
+Ответ: нужно указать docker-compose up имя_сервиса, например docker-compose up app_1
