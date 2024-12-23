@@ -1,18 +1,18 @@
 После установки minikube и создания манифестов, были созданы объекты с помощью ```kubectl create -f ...```
-<img src="screenshots/kubectl-gets.png" alt="Alt text" width="600" height="400">
+![Alt text](screenshots/kubectl-gets.png)
 
 После этого таким же образом были созданы объекты nextcloud. 
-<img src="screenshots/nextcloud.png" alt="Alt text" width="600" height="400">
+![Alt text](screenshots/nextcloud.png)
 
 Потом было проверено его состояние с помощью ```kubectl logs ...```
-![Alt text](screenshots/nextcloud_success.png){: width="600" height="400"}
+![Alt text](screenshots/nextcloud_success.png)
 
 и осуществлен доступ к интерфейсу через ```kubectl expose deployment nextcloud --type=NodePort --port=80```
 и последующим ```minikube service nextcloud```
-![Alt text](screenshots/nextcloud_web.png){: width="600" height="400"}
+![Alt text](screenshots/nextcloud_web.png)
 
 Также был установлен доп.компонент dashboard через ```minikube dashboard --url```
-![Alt text](screenshots/dashboards.png){: width="600" height="400"}
+![Alt text](screenshots/dashboards.png)
 
 Если отскейлить количество реплик postgres-deployment в 0, затем обратно в 1, в nextcloud можно было видеть перезапуск пода: 
 ![Alt text](screenshots/minikube_0_1_replicas.png)
