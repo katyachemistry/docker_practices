@@ -15,7 +15,7 @@
 ![Alt text](screenshots/dashboards.png){: width="600" height="400"}
 
 Если отскейлить количество реплик postgres-deployment в 0, затем обратно в 1, в nextcloud можно было видеть перезапуск пода: 
-![Alt text](screenshots/minikube_0_1_replicas.png){: width="600" height="400"}
+![Alt text](screenshots/minikube_0_1_replicas.png =600x400)
 
 После этого были сделаны все задания, результат которых можно найти в папке edited_ymls (перенесены POSTGRES_USER и POSTGRES_PASSWORD из конфигмапы в секреты, для некстклауда перенесены его переменные NEXTCLOUD_UPDATE, ALLOW_EMPTY_PASSWORD и NEXTCLOUD_TRUSTED_DOMAINS из деплоймента в конфигмапу, добавлены Liveness и Readiness пробы в nextcloud.yml).
 
