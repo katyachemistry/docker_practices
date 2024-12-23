@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nextcloud-secret
+  labels:
+    app: nextcloud
+type: Opaque
+stringData:
+  NEXTCLOUD_ADMIN_PASSWORD: "nextcloud_password"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud
+  labels:
+    app: nextcloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextcloud
+  template:
+    metadata:
+      labels:
+        app: nextcloud
+    spec:
+      containers:
+      - name: nextcloud
+        image: docker.io/nextcloud:stable-apache
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 250m
+            memory: 128Mi
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        env:
+        - name: POSTGRES_HOST
+          value: postgres-service
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-configmap
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        - name: NEXTCLOUD_ADMIN_USER
+          value: nextcloud_user
+        - name: NEXTCLOUD_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nextcloud-secret
+              key: NEXTCLOUD_ADMIN_PASSWORD
+        - name: NEXTCLOUD_UPDATE
+          valueFrom:
+            configMapKeyRef:
+              name: nextcloud-configmap
+              key: NEXTCLOUD_UPDATE
+        - name: ALLOW_EMPTY_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: nextcloud-configmap
+              key: ALLOW_EMPTY_PASSWORD
+        - name: NEXTCLOUD_TRUSTED_DOMAINS
+          valueFrom:
+            configMapKeyRef:
+              name: nextcloud-configmap
+              key: NEXTCLOUD_TRUSTED_DOMAINS
+        livenessProbe:
+          tcpSocket:
+            port: 80  
+          initialDelaySeconds: 60
+          periodSeconds: 15
+          failureThreshold: 3
+        readinessProbe:
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 70
+          periodSeconds: 10
+          failureThreshold: 3
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      dnsPolicy: ClusterFirst
