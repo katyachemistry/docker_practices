@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cid-to-smiles-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cid-to_smiles
+  template:
+    metadata:
+      labels:
+        app: cid-to_smiles
+    spec:
+      initContainers:
+      - name: run-sql-script
+        image: postgres:15
+        command: ["sh", "-c"]
+        args:
+        - |
+          until pg_isready -h postgres-service -U $(POSTGRES_USER); do
+            echo "Waiting for PostgreSQL to become ready..."
+            sleep 5
+          done
+          psql -h postgres-service -U $(POSTGRES_USER) -d $(POSTGRES_DB) -f /scripts/init.sql
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_USER
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_DB
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        volumeMounts:
+        - name: sql-script
+          mountPath: /scripts
+      containers:
+      - name: cid-to-smiles-container
+        image: kkkb/cid_to_smiles:latest
+        command: ["python", "CID_to_SMILES.py"] 
+        args:
+          - "-i"
+          - "/data/input.csv"
+          - "-t"
+          - "isomeric" 
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_USER
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_DB
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        volumeMounts:
+        - name: cid-data
+          mountPath: /data
+      volumes:
+      - name: sql-script
+        configMap:
+          name: init-sql-script
+      - name: cid-data
+        configMap:
+          name: cid-csv
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: init-sql-script
+data:
+  init.sql: |
+    CREATE TABLE CHEMICAL_DATA (
+      id serial primary key,
+      CID integer unique not null,
+      SMILES text,
+      embedding BYTEA
+      );
